@@ -1,10 +1,7 @@
 import streamlit as st
 import pandas as pd
-import json
 
-# ==========================================
-# 1. CORE BACKEND SERVICES
-# ==========================================
+# استيراد كافة الخدمات والنماذج
 from models import create_tables
 from customers import add_customer, get_all_customers
 from suppliers import add_supplier, get_all_suppliers
@@ -18,229 +15,57 @@ from pdf_service import generate_deal_pdf
 from email_service import send_email
 from shipments import add_shipment, get_all_shipments, update_shipment_status
 from ai_assistant import get_best_supplier_for_product, simulate_shipping_impact, get_analytics_summary, ask_gti_ai
+from auth import login_user, init_users_table
 from auth import login_user, init_users_table, change_password
 
-# ==========================================
-# 2. SYSTEM INITIALIZATION
-# ==========================================
+# 1. تهيئة وقواعد البيانات والجدول الأمني
 create_tables()
 init_users_table()
 
+# 2. إعدادات الصفحة
 st.set_page_config(
-    page_title="GIBBS Trade Intelligence | Enterprise",
-    page_icon="G",
+    page_title="GIBBS Trade Intelligence",
+    page_icon="🧪",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ==========================================
-# 3. ENTERPRISE DESIGN SYSTEM (CSS)
-# ==========================================
-def inject_enterprise_css():
-    st.markdown("""
+# 3. التنسيق والاتجاه العربي
+st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif !important;
+    .main-header {
+        font-size: 26px;
+        font-weight: bold;
+        color: #1E3A8A;
+        text-align: right;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #E5E7EB;
+        margin-bottom: 20px;
     }
     .stApp {
-        background-color: #F6F8FA;
         direction: rtl;
         text-align: right;
     }
-
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 4rem !important;
-        max-width: 1400px !important;
-    }
-
-    .gti-page-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #0B1F33;
-        margin-bottom: 4px;
-    }
-    .gti-page-subtitle {
-        font-size: 15px;
-        color: #64748B;
-        margin-bottom: 32px;
-        font-weight: 400;
-    }
-    .gti-section-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #0F172A;
-        margin: 24px 0 16px 0;
-        border-bottom: 1px solid #E2E8F0;
-        padding-bottom: 8px;
-    }
-
-    [data-testid="stSidebar"] {
-        background-color: #0B1F33 !important;
-        border-left: 1px solid #071522;
-    }
-    [data-testid="stSidebar"] * {
-        color: #CBD5E1 !important;
-    }
-    .gti-logo-container {
-        padding: 10px 0 20px 0;
-        margin-bottom: 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .gti-logo {
-        font-size: 22px;
-        font-weight: 700;
-        color: #FFFFFF !important;
-        letter-spacing: 1px;
-    }
-    .gti-logo-sub {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #16A6B6 !important;
-        font-weight: 600;
-    }
-
-    .stButton > button {
-        background-color: #164E78 !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        font-weight: 600 !important;
-        border: none !important;
-        padding: 8px 24px !important;
-        transition: background-color 0.2s ease !important;
-    }
-    .stButton > button:hover {
-        background-color: #0B1F33 !important;
-    }
-    
-    .stTextInput>div>div>input, .stSelectbox>div>div>select, .stNumberInput>div>div>input {
-        border-radius: 6px;
-        border: 1px solid #CBD5E1;
-        background-color: #FFFFFF;
-        color: #0F172A;
-    }
-
-    .kpi-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .kpi-title {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #64748B;
-        font-weight: 600;
-        margin-bottom: 12px;
-    }
-    .kpi-val {
-        font-size: 32px;
-        font-weight: 700;
-        color: #0F172A;
-        margin-bottom: 8px;
-    }
-    .kpi-trend {
-        font-size: 13px;
-        font-weight: 500;
-    }
-    .trend-up { color: #15803D; }
-    .trend-neutral { color: #2563A6; }
-
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
-    }
-    .badge-critical { background: #FEF2F2; color: #C2413B; border: 1px solid #FECACA; }
-    .badge-attention { background: #FEFCE8; color: #B7791F; border: 1px solid #FEF08A; }
-    .badge-info { background: #EFF6FF; color: #2563A6; border: 1px solid #BFDBFE; }
-    .badge-success { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
-
-    .quote-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 24px;
-        position: relative;
-    }
-    .quote-card-best {
-        border: 2px solid #2563A6;
-        box-shadow: 0 4px 15px rgba(37, 99, 166, 0.1);
-    }
-    .quote-best-badge {
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #2563A6;
-        color: #FFFFFF;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 4px 12px;
-        border-radius: 20px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .quote-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #F1F4F7;
-        font-size: 14px;
-    }
-    .quote-row:last-child { border-bottom: none; }
-    .quote-label { color: #64748B; }
-    .quote-value { font-weight: 600; color: #0F172A; }
-
-    .financial-panel {
-        background: #0B1F33;
-        color: #FFFFFF;
-        border-radius: 12px;
-        padding: 32px;
-        height: 100%;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    .fin-label { font-size: 13px; color: #94A3B8; margin-bottom: 4px; }
-    .fin-value { font-size: 36px; font-weight: 700; color: #FFFFFF; margin-bottom: 24px; }
-    .fin-value-accent { color: #16A6B6; }
-    .fin-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 24px 0; }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-inject_enterprise_css()
-
-# ==========================================
-# 4. SESSION MANAGEMENT & AUTHENTICATION
-# ==========================================
+# 4. إدارة الجلسة ونظام تسجيل الدخول (Session State)
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
+# --- شاشة تسجيل الدخول المربعة الحصينة ---
 if not st.session_state["logged_in"]:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1.5, 2, 1.5])
-    with col2:
-        st.markdown("""
-        <div style="text-align: center; margin-bottom: 30px;">
-            <div style="font-size: 36px; font-weight: 700; color: #0B1F33; letter-spacing: -1px;">GIBBS</div>
-            <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 3px; color: #164E78; font-weight: 600;">Trade Intelligence</div>
-            <p style="color: #64748B; margin-top: 12px;">Enterprise Commercial Intelligence Platform</p>
-        </div>
-        """, unsafe_allow_html=True)
+    col_a, col_b, col_c = st.columns([1, 2, 1])
+    with col_b:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>🧪 GIBBS Trade Intelligence</h2>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center;'>تسجيل الدخول للنظام</h4>", unsafe_allow_html=True)
+        st.divider()
         
         with st.form("login_form", clear_on_submit=False):
-            username = st.text_input("اسم المستخدم (Username)")
-            password = st.text_input("كلمة المرور (Password)", type="password")
+            username = st.text_input("اسم المستخدم")
+            password = st.text_input("كلمة المرور", type="password")
             submit = st.form_submit_button("تسجيل الدخول", use_container_width=True)
             
             if submit:
@@ -248,75 +73,69 @@ if not st.session_state["logged_in"]:
                 if user:
                     st.session_state["logged_in"] = True
                     st.session_state["user_info"] = user
+                    st.success("✅ تم تسجيل الدخول بنجاح!")
                     st.rerun()
                 else:
-                    st.error("بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.")
+                    st.error("❌ اسم المستخدم أو كلمة المرور غير صحيحة.")
     st.stop()
 
-# ==========================================
-# 5. ENTERPRISE NAVIGATION (SIDEBAR)
-# ==========================================
+
+# --- القائمة الجانبية بعد تسجيل الدخول ---
 user = st.session_state["user_info"]
 
-st.sidebar.markdown("""
-<div class="gti-logo-container">
-    <div class="gti-logo">GIBBS</div>
-    <div class="gti-logo-sub">Trade Intelligence</div>
-</div>
-""", unsafe_allow_html=True)
+st.sidebar.title("🧪 GIBBS Trade Intelligence")
+st.sidebar.markdown(f"👤 **المستخدم:** {user['username']} (`{user['role']}`)")
 
-st.sidebar.markdown(f"<div style='font-size:12px; color:#94A3B8; margin-bottom:15px;'>المستخدم: <b>{user['username']}</b> (`{user['role']}`)</div>", unsafe_allow_html=True)
-
-if st.sidebar.button("تسجيل الخروج", use_container_width=True):
+if st.sidebar.button("🚪 تسجيل الخروج"):
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
     st.rerun()
 
-with st.sidebar.expander("تغيير كلمة المرور"):
+# --- نموذج تغيير كلمة المرور ---
+with st.sidebar.expander("🔑 تغيير كلمة المرور"):
     with st.form("change_pwd_form", clear_on_submit=True):
         old_pwd = st.text_input("كلمة المرور الحالية", type="password")
         new_pwd = st.text_input("كلمة المرور الجديدة", type="password")
         confirm_pwd = st.text_input("تأكيد كلمة المرور", type="password")
-        if st.form_submit_button("حفظ كلمة المرور"):
+        
+        submit_pwd = st.form_submit_button("حفظ كلمة المرور", use_container_width=True)
+        
+        if submit_pwd:
             if new_pwd != confirm_pwd:
-                st.error("كلمة المرور الجديدة غير متطابقة.")
+                st.error("⚠️ كلمة المرور الجديدة غير متطابقة.")
             else:
                 success, msg = change_password(user['username'], old_pwd, new_pwd)
                 if success:
-                    st.success(msg)
+                    st.success(f"✅ {msg}")
                 else:
-                    st.error(msg)
+                    st.error(f"❌ {msg}")
 
 st.sidebar.markdown("---")
 
 menu = st.sidebar.radio(
-    "التنقل الرئيسي",
+    "الانتقال السريع إلى الشاشة:",
     [
-        "لوحة التحكم التنفيذية",
-        "إدارة العملاء",
-        "استخبارات الموردين",
-        "المنتجات الكيميائية",
-        "طلبات الشراء",
-        "مقارنة العروض",
-        "إدارة الصفقات",
-        "متابعة الشحنات",
-        "حاسبة التكلفة الواصلة",
-        "مساعد GTI الاستراتيجي",
-        "التحليلات والتقارير"
+        "📊 لوحة التحكم",
+        "👥 إدارة العملاء",
+        "🏭 إدارة الموردين",
+        "🧪 المنتجات الكيميائية",
+        "📑 طلبات الشراء",
+        "⚖️ مقارنة العروض",
+        "🤝 إدارة الصفقات",
+        "🚢 متابعة الشحنات",
+        "🧮 حاسبة التكلفة",
+        "🤖 مساعد الذكاء الاصطناعي",
+        "📈 التحليلات والتقارير"
     ]
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("GTI System v2.0 - Secured Enterprise")
+st.sidebar.caption("GTI System v1.0 - Secured Enterprise")
 
 
-# ==========================================
-# 6. APPLICATION MODULES
-# ==========================================
-
-if menu == "لوحة التحكم التنفيذية":
-    st.markdown("<div class='gti-page-title'>لوحة التحكم التنفيذية</div>", unsafe_allow_html=True)
-    st.markdown("<div class='gti-page-subtitle'>مركز الأداء التجاري والعمليات اللوجستية العالمية</div>", unsafe_allow_html=True)
+# --- 1. لوحة التحكم ---
+if menu == "📊 لوحة التحكم":
+    st.markdown("<div class='main-header'>📊 لوحة التحكم الرئيسية والذكاء التجاري</div>", unsafe_allow_html=True)
     
     customers_list = get_all_customers()
     suppliers_list = get_all_suppliers()
@@ -329,69 +148,37 @@ if menu == "لوحة التحكم التنفيذية":
     total_commission = sum([d['commission_amount'] for d in deals_list]) if deals_list else 0.0
 
     col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-title">إجمالي قيمة الصفقات</div>
-            <div class="kpi-val">${total_deal_value:,.0f}</div>
-            <div class="kpi-trend trend-up">الأداء المالي</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-title">إجمالي العمولات</div>
-            <div class="kpi-val">${total_commission:,.0f}</div>
-            <div class="kpi-trend trend-up">الإيرادات المحققة</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-title">الشحنات النشطة</div>
-            <div class="kpi-val">{len(active_shipments)}</div>
-            <div class="kpi-trend trend-neutral">قيد التنفيذ</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col4:
-        st.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-title">الشبكة التجارية</div>
-            <div class="kpi-val">{len(customers_list)} / {len(suppliers_list)}</div>
-            <div class="kpi-trend trend-neutral">عملاء / موردين</div>
-        </div>
-        """, unsafe_allow_html=True)
+    col1.metric("إجمالي العملاء", len(customers_list))
+    col2.metric("إجمالي الموردين", len(suppliers_list))
+    col3.metric("إجمالي المنتجات", len(products_list))
+    col4.metric("الشحنات النشطة", len(active_shipments), f"من إجمالي {len(shipments_list)}")
 
-    st.markdown("<div class='gti-section-title'>مركز العمليات والمخاطر (Operations & Risk Center)</div>", unsafe_allow_html=True)
+    st.divider()
+
+    m_col1, m_col2 = st.columns(2)
+    m_col1.metric("إجمالي قيمة الصفقات", f"${total_deal_value:,.2f}")
+    m_col2.metric("إجمالي العمولات والأرباح", f"${total_commission:,.2f}")
+
+    st.subheader("🔔 التنبيهات وإشعار اللوجستيات")
     if active_shipments:
         for s in active_shipments:
-            severity = "badge-attention" if s['status'] == "Delayed" else "badge-info"
-            st.markdown(f"""
-            <div style="background: white; border: 1px solid #E2E8F0; padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <span class="status-badge {severity}" style="margin-left: 12px;">{s['status']}</span>
-                    <strong style="color: #0F172A; font-size: 15px;">شحنة رقم {s['id']}</strong>
-                    <span style="color: #64748B; font-size: 14px; margin-right: 8px;">• الحاوية: {s['container_number']} • العميل: {s['customer_name']}</span>
-                </div>
-                <div style="text-align: left; font-size: 13px; color: #64748B;">
-                    وصول متوقع (ETA): <strong style="color: #0F172A;">{s['eta']}</strong>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.warning(f"🚢 **شحنة نشطة #{s['id']}**: الحاوية `{s['container_number']}` الخاصة بالعميل **{s['customer_name']}** - الحالة الحالية: **{s['status']}** (وصول متوقع ETA: {s['eta']})")
     else:
-        st.markdown('<div class="status-badge badge-success">جميع الشحنات في حالة ممتازة ومكتملة ولا توجد تنبيهات تأخير حالياً.</div>', unsafe_allow_html=True)
+        st.success("✅ جميع الشحنات في حالة ممتازة ومكتملة ولا توجد تنبيهات تأخير حالياً.")
 
-    st.markdown("<div class='gti-section-title'>أحدث الصفقات المسجلة</div>", unsafe_allow_html=True)
+    st.divider()
+    st.subheader("أحدث الصفقات المسجلة")
     if deals_list:
         st.dataframe(pd.DataFrame(deals_list), use_container_width=True)
     else:
-        st.info("لا توجد صفقات مسجلة بعد في النظام.")
+        st.info("لا توجد صفقات مسجلة بعد في قاعدة البيانات.")
 
 
-elif menu == "إدارة العملاء":
-    st.markdown("<div class='gti-page-title'>إدارة العملاء (Customer Workspace)</div>", unsafe_allow_html=True)
+# --- 2. إدارة العملاء ---
+elif menu == "👥 إدارة العملاء":
+    st.markdown("<div class='main-header'>👥 إدارة العملاء (Customers)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إنشاء ملف عميل", "📋 قاعدة بيانات العملاء"])
+    tab1, tab2 = st.tabs(["➕ إضافة عميل جديد", "📋 قائمة العملاء المسجلين"])
     
     with tab1:
         with st.form("add_customer_form", clear_on_submit=True):
@@ -404,12 +191,13 @@ elif menu == "إدارة العملاء":
             country = col_b.text_input("الدولة")
             address = st.text_area("العنوان")
             
-            if st.form_submit_button("حفظ ملف العميل"):
+            submitted = st.form_submit_button("حفظ العميل")
+            if submitted:
                 if company_name.strip():
                     c_id = add_customer(company_name, contact_person, email, phone, whatsapp, country, address)
-                    st.success(f"تم إنشاء ملف العميل بنجاح! رقم المعرف: {c_id}")
+                    st.success(f"✅ تم إضافة العميل بنجاح! رقم التعريف: {c_id}")
                 else:
-                    st.error("يرجى إدخال اسم الشركة.")
+                    st.error("⚠️ يرجى إدخال اسم الشركة.")
                     
     with tab2:
         customers = get_all_customers()
@@ -426,10 +214,11 @@ elif menu == "إدارة العملاء":
             st.info("لا يوجد عملاء مسجلون حالياً.")
 
 
-elif menu == "استخبارات الموردين":
-    st.markdown("<div class='gti-page-title'>استخبارات الموردين (Supplier Intelligence)</div>", unsafe_allow_html=True)
+# --- 3. إدارة الموردين ---
+elif menu == "🏭 إدارة الموردين":
+    st.markdown("<div class='main-header'>🏭 إدارة الموردين (Suppliers)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ تسجيل مورد جديد", "📋 سجل استخبارات الموردين"])
+    tab1, tab2 = st.tabs(["➕ إضافة مورد جديد", "📋 قائمة الموردين المسجلين"])
     
     with tab1:
         with st.form("add_supplier_form", clear_on_submit=True):
@@ -441,15 +230,16 @@ elif menu == "استخبارات الموردين":
             email = col_a.text_input("البريد الإلكتروني")
             whatsapp = col_b.text_input("واتساب")
             website = st.text_input("الموقع الإلكتروني")
-            rating = st.slider("مؤشر التقييم التجاري", 1.0, 5.0, 4.0, 0.1)
-            notes = st.text_area("ملاحظات استخباراتية")
+            rating = st.slider("تقييم المورد", 1.0, 5.0, 4.0, 0.1)
+            notes = st.text_area("ملاحظات")
             
-            if st.form_submit_button("اعتماد وحفظ المورد"):
+            submitted = st.form_submit_button("حفظ المورد")
+            if submitted:
                 if company_name.strip():
                     s_id = add_supplier(company_name, country, city, contact_person, email, whatsapp, website, rating, notes)
-                    st.success(f"تم تسجيل المورد بنجاح! رقم المعرف: {s_id}")
+                    st.success(f"✅ تم إضافة المورد بنجاح! رقم التعريف: {s_id}")
                 else:
-                    st.error("يرجى إدخال اسم شركة المورد.")
+                    st.error("⚠️ يرجى إدخال اسم شركة المورد.")
                     
     with tab2:
         suppliers = get_all_suppliers()
@@ -459,10 +249,11 @@ elif menu == "استخبارات الموردين":
             st.info("لا يوجد موردون مسجلون حالياً.")
 
 
-elif menu == "المنتجات الكيميائية":
-    st.markdown("<div class='gti-page-title'>المنتجات الكيميائية (Chemical Portfolio)</div>", unsafe_allow_html=True)
+# --- 4. إدارة المنتجات ---
+elif menu == "🧪 المنتجات الكيميائية":
+    st.markdown("<div class='main-header'>🧪 المنتجات الكيميائية (Products)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إضافة منتج جديد", "📋 دليل المنتجات الكيميائية"])
+    tab1, tab2 = st.tabs(["➕ إضافة منتج جديد", "📋 قائمة المنتجات المسجلة"])
     
     with tab1:
         with st.form("add_product_form", clear_on_submit=True):
@@ -472,16 +263,17 @@ elif menu == "المنتجات الكيميائية":
             cas_number = col_a.text_input("CAS Number")
             hs_code = col_b.text_input("HS Code")
             un_number = col_c.text_input("UN Number")
-            packaging = col_a.text_input("طريقة التعبئة")
+            packaging = col_a.text_input("التعبئة")
             origin_country = col_b.text_input("بلد المنشأ")
-            specifications = st.text_area("المواصفات الفنية التفصيلية")
+            specifications = st.text_area("المواصفات الفنية")
             
-            if st.form_submit_button("حفظ المنتج في المحفظة"):
+            submitted = st.form_submit_button("حفظ المنتج")
+            if submitted:
                 if trade_name.strip():
                     p_id = add_product(trade_name, chemical_name, cas_number, hs_code, un_number, specifications, packaging, origin_country)
-                    st.success(f"تم إضافة المنتج بنجاح! رقم المعرف: {p_id}")
+                    st.success(f"✅ تم إضافة المنتج بنجاح! رقم التعريف: {p_id}")
                 else:
-                    st.error("يرجى إدخال الاسم التجاري.")
+                    st.error("⚠️ يرجى إدخال الاسم التجاري.")
                     
     with tab2:
         products = get_all_products()
@@ -491,8 +283,9 @@ elif menu == "المنتجات الكيميائية":
             st.info("لا توجد منتجات مسجلة حالياً.")
 
 
-elif menu == "طلبات الشراء":
-    st.markdown("<div class='gti-page-title'>طلبات الشراء (Purchase Requests)</div>", unsafe_allow_html=True)
+# --- 5. طلبات الشراء ---
+elif menu == "📑 طلبات الشراء":
+    st.markdown("<div class='main-header'>📑 طلبات الشراء (Purchase Requests)</div>", unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["➕ تسجيل طلب شراء جديد", "📋 قائمة الطلبات الواردة"])
     
@@ -501,7 +294,7 @@ elif menu == "طلبات الشراء":
     
     with tab1:
         if not customers or not products:
-            st.warning("يجب إضافة عميل ومنتج واحد على الأقل قبل تسجيل طلب شراء.")
+            st.warning("⚠️ يجب إضافة عميل واحد ومنتج واحد على الأقل قبل تسجيل طلب شراء.")
         else:
             cust_dict = {c['company_name']: c['id'] for c in customers}
             prod_dict = {p['trade_name']: p['id'] for p in products}
@@ -513,16 +306,17 @@ elif menu == "طلبات الشراء":
                 
                 col_a, col_b = st.columns(2)
                 quantity = col_a.number_input("الكمية المطلوبة *", min_value=0.1, value=100.0, step=10.0)
-                unit = col_b.selectbox("الوحدة القياسية", ["TON", "KG", "IBC", "DRUM", "CONTAINER"])
+                unit = col_b.selectbox("الوحدة", ["TON", "KG", "IBC", "DRUM", "CONTAINER"])
                 
                 col_c, col_d = st.columns(2)
-                destination_country = col_c.text_input("الدولة الوجهة")
+                destination_country = col_c.text_input("الدولة الهدف / الوجهة")
                 destination_port = col_d.text_input("الميناء المستهدف")
                 
                 delivery_date = st.date_input("موعد التسليم المتوقع")
-                specifications = st.text_area("المواصفات الخاصة وشروط الإمداد")
+                specifications = st.text_area("مواصفات خاصة أو شروط إضافية")
                 
-                if st.form_submit_button("تسجيل طلب الشراء"):
+                submitted = st.form_submit_button("تسجيل طلب الشراء")
+                if submitted:
                     req_id = add_purchase_request(
                         customer_id=cust_dict[selected_customer],
                         product_id=prod_dict[selected_product],
@@ -533,7 +327,7 @@ elif menu == "طلبات الشراء":
                         destination_country=destination_country,
                         destination_port=destination_port
                     )
-                    st.success(f"تم تسجيل طلب الشراء بنجاح! رقم الطلب: #{req_id}")
+                    st.success(f"✅ تم تسجيل طلب الشراء بنجاح! رقم الطلب: #{req_id}")
 
     with tab2:
         requests_list = get_all_purchase_requests()
@@ -543,14 +337,14 @@ elif menu == "طلبات الشراء":
             st.info("لا توجد طلبات شراء مسجلة حالياً.")
 
 
-elif menu == "مقارنة العروض":
-    st.markdown("<div class='gti-page-title'>مركز قرار المشتريات (Procurement Decision Center)</div>", unsafe_allow_html=True)
-    st.markdown("<div class='gti-page-subtitle'>مقارنة عروض أسعار الموردين واتخاذ القرار الاستراتيجي الأفضل</div>", unsafe_allow_html=True)
+# --- 6. مقارنة العروض ---
+elif menu == "⚖️ مقارنة العروض":
+    st.markdown("<div class='main-header'>⚖️ منصة مقارنة عروض الأسعار والذكاء التجاري</div>", unsafe_allow_html=True)
     
     tab1, tab2, tab3 = st.tabs([
-        "📊 مصفوفة المقارنة التحليلية", 
+        "📊 شاشة المقارنة التحليلية", 
         "➕ تسجيل عرض سعر جديد", 
-        "📋 سجل عروض الأسعار"
+        "📋 جميع العروض المسجلة"
     ])
     
     requests_list = get_all_purchase_requests()
@@ -561,61 +355,48 @@ elif menu == "مقارنة العروض":
             st.info("لا توجد طلبات شراء مسجلة لمقارنة عروضها حالياً.")
         else:
             req_options = {f"طلب #{r['id']} - العميل: {r['customer_name']} | المنتج: {r['product_name']} ({r['quantity']} {r['unit']})": r['id'] for r in requests_list}
-            selected_req_label = st.selectbox("اختر طلب الشراء لعرض تحليل الموردين:", list(req_options.keys()))
+            selected_req_label = st.selectbox("اختر طلب الشراء لعرض عروض الموردين المتاحة:", list(req_options.keys()))
             selected_req_id = req_options[selected_req_label]
             
             quotes = get_quotations_by_request(selected_req_id)
             st.divider()
             
             if not quotes:
-                st.warning("لا توجد عروض أسعار مسجلة لهذا الطلب حتى الآن.")
+                st.warning("⚠️ لا توجد عروض أسعار مسجلة لهذا الطلب حتى الآن.")
             else:
-                best_quote = min(quotes, key=lambda x: (x['unit_price'], -x['supplier_rating']))
+                st.subheader("💡 مؤشرات تحليلية سريعة")
+                best_price_quote = min(quotes, key=lambda x: x['unit_price'])
+                best_rating_quote = max(quotes, key=lambda x: x['supplier_rating'])
                 
-                cols = st.columns(len(quotes) if len(quotes) <= 3 else 3)
-                for i, quote in enumerate(quotes):
-                    is_best = (quote['id'] == best_quote['id'])
-                    with cols[i % 3]:
-                        card_class = "quote-card quote-card-best" if is_best else "quote-card"
-                        best_badge = "<div class='quote-best-badge'>الخيار الاستراتيجي الأفضل</div>" if is_best else ""
-                        
-                        st.markdown(f"""
-                        <div class="{card_class}">
-                            {best_badge}
-                            <div style="font-size:18px; font-weight:700; color:#0F172A; margin-bottom:4px;">{quote['supplier_name']}</div>
-                            <div style="font-size:12px; color:#64748B; margin-bottom:20px;">
-                                <span class="status-badge badge-info">تقييم المورد: {quote['supplier_rating']}/5.0</span>
-                                <span style="margin-right:8px;">{quote['supplier_country']}</span>
-                            </div>
-                            
-                            <div class="quote-row">
-                                <span class="quote-label">سعر الوحدة</span>
-                                <span class="quote-value" style="font-size:18px;">${quote['unit_price']:,.2f} <span style="font-size:11px; font-weight:normal;">{quote['currency']}</span></span>
-                            </div>
-                            <div class="quote-row">
-                                <span class="quote-label">شرط التسليم</span>
-                                <span class="quote-value">{quote['incoterms']}</span>
-                            </div>
-                            <div class="quote-row">
-                                <span class="quote-label">فترة التوريد</span>
-                                <span class="quote-value">{quote['production_lead_time']}</span>
-                            </div>
-                            <div class="quote-row">
-                                <span class="quote-label">شروط الدفع</span>
-                                <span class="quote-value">{quote['payment_terms']}</span>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                m1, m2, m3 = st.columns(3)
+                m1.metric("أقل سعر وحدة", f"${best_price_quote['unit_price']:,.2f} {best_price_quote['currency']}", f"المورد: {best_price_quote['supplier_name']}")
+                m2.metric("أعلى مورد تقييماً", f"⭐ {best_rating_quote['supplier_rating']:.1f} / 5.0", best_rating_quote['supplier_name'])
+                m3.metric("إجمالي العروض المقدمة", f"{len(quotes)} عروض")
+                
+                st.subheader("📋 جدول المقارنة الشامل بين الموردين")
+                df_quotes = pd.DataFrame(quotes)
+                df_display = df_quotes[[
+                    'supplier_name', 'supplier_country', 'supplier_rating', 
+                    'unit_price', 'currency', 'incoterms', 
+                    'production_lead_time', 'payment_terms'
+                ]].copy()
+                
+                df_display.columns = [
+                    "المورد", "الدولة", "التقييم", 
+                    "سعر الوحدة", "العملة", "شرط التسليم (Incoterms)", 
+                    "مدة الإنتاج", "شروط الدفع"
+                ]
+                st.dataframe(df_display, use_container_width=True)
 
     with tab2:
         if not requests_list or not suppliers_list:
-            st.warning("يجب وجود طلب شراء ومورد واحد على الأقل لتسجيل عرض سعر.")
+            st.warning("⚠️ يجب وجود طلب شراء واحد ومورد واحد على الأقل لتسجيل عرض سعر.")
         else:
             req_dict = {f"طلب #{r['id']} - {r['customer_name']} ({r['product_name']})": r['id'] for r in requests_list}
             supp_dict = {s['company_name']: s['id'] for s in suppliers_list}
             
             with st.form("add_quotation_form_tab2", clear_on_submit=True):
-                selected_req = st.selectbox("اختر طلب الشراء *", list(req_dict.keys()))
+                selected_req = st.selectbox("اختر طلب الشراء المستهدف *", list(req_dict.keys()))
                 selected_supp = st.selectbox("اختر المورد *", list(supp_dict.keys()))
                 
                 col_a, col_b = st.columns(2)
@@ -628,7 +409,8 @@ elif menu == "مقارنة العروض":
                 
                 payment_terms = st.text_input("شروط الدفع (مثال: 30% Advance, 70% LC)")
                 
-                if st.form_submit_button("حفظ عرض السعر"):
+                submitted = st.form_submit_button("حفظ عرض السعر")
+                if submitted:
                     q_id = add_quotation(
                         request_id=req_dict[selected_req],
                         supplier_id=supp_dict[selected_supp],
@@ -638,7 +420,7 @@ elif menu == "مقارنة العروض":
                         payment_terms=payment_terms,
                         incoterms=incoterms
                     )
-                    st.success(f"تم تسجيل عرض السعر بنجاح! رقم المعرف: #{q_id}")
+                    st.success(f"✅ تم تسجيل عرض السعر بنجاح! رقم العرض: #{q_id}")
 
     with tab3:
         all_q = get_all_quotations()
@@ -648,10 +430,11 @@ elif menu == "مقارنة العروض":
             st.info("لا توجد عروض أسعار مسجلة حالياً.")
 
 
-elif menu == "إدارة الصفقات":
-    st.markdown("<div class='gti-page-title'>إدارة الصفقات والعمولات (Deal Workspace)</div>", unsafe_allow_html=True)
+# --- 7. إدارة الصفقات ---
+elif menu == "🤝 إدارة الصفقات":
+    st.markdown("<div class='main-header'>🤝 إدارة الصفقات والعمولات (Deals Management)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إغلاق صفقة جديدة", "📋 قائمة الصفقات والتصدير"])
+    tab1, tab2 = st.tabs(["➕ إغلاق وإنشاء صفقة جديدة", "📋 قائمة الصفقات الحالية والتصدير"])
     
     requests_list = get_all_purchase_requests()
     suppliers_list = get_all_suppliers()
@@ -660,29 +443,34 @@ elif menu == "إدارة الصفقات":
     
     with tab1:
         if not requests_list or not quotations_list:
-            st.warning("يجب تسجيل طلب شراء وعرض سعر واحد على الأقل قبل إنشاء صفقة.")
+            st.warning("⚠️ يجب تسجيل طلب شراء وعرض سعر واحد على الأقل قبل إنشاء صفقة.")
         else:
             req_dict = {f"طلب #{r['id']} - العميل: {r['customer_name']} | المنتج: {r['product_name']}": r['id'] for r in requests_list}
             supp_dict = {s['company_name']: s['id'] for s in suppliers_list}
             cust_dict = {c['company_name']: c['id'] for c in customers_list}
             
             with st.form("create_deal_form", clear_on_submit=True):
-                selected_req_label = st.selectbox("طلب الشراء المرتبط *", list(req_dict.keys()))
+                st.subheader("📝 تفاصيل الصفقة والعملاء")
+                
+                selected_req_label = st.selectbox("اختر طلب الشراء المرتبط بالصفقة *", list(req_dict.keys()))
                 selected_req_id = req_dict[selected_req_label]
                 
                 col_a, col_b = st.columns(2)
-                selected_cust_name = col_a.selectbox("العميل المشتري *", list(cust_dict.keys()))
-                selected_supp_name = col_b.selectbox("المورد المعتمد *", list(supp_dict.keys()))
+                selected_cust_name = col_a.selectbox("العميل المشترِي *", list(cust_dict.keys()))
+                selected_supp_name = col_b.selectbox("المورد المورد *", list(supp_dict.keys()))
                 
+                st.subheader("💰 القيم المالية والعمولات")
                 col_c, col_d = st.columns(2)
                 deal_value = col_c.number_input("القيمة الإجمالية للصفقة ($) *", min_value=1.0, value=10000.0, step=500.0)
                 commission_rate = col_d.number_input("نسبة عمولة الشركة (%) *", min_value=0.1, max_value=50.0, value=5.0, step=0.5)
                 
                 est_commission = deal_value * (commission_rate / 100.0)
-                st.info(f"حسابات معاينة الصفقة: قيمة العمولة المتوقعة = ${est_commission:,.2f}")
+                st.info(f"💡 معاينة الحسابات: قيمة العمولة المستحقة = **${est_commission:,.2f}** | صافي الربح التقديري = **${est_commission:,.2f}**")
                 
-                if st.form_submit_button("إغلاق وحفظ الصفقة"):
+                submitted = st.form_submit_button("إغلاق وحفظ الصفقة")
+                if submitted:
                     quotation_id = quotations_list[0]['id'] if quotations_list else 1
+                    
                     deal_id = create_deal(
                         request_id=selected_req_id,
                         quotation_id=quotation_id,
@@ -691,7 +479,7 @@ elif menu == "إدارة الصفقات":
                         deal_value=deal_value,
                         commission_rate=commission_rate
                     )
-                    st.success(f"تم تسجيل الصفقة بنجاح! رقم الصفقة المرجعي: #{deal_id}")
+                    st.success(f"🎉 تم تسجيل الصفقة بنجاح! رقم الصفقة المرجعي: #{deal_id}")
 
     with tab2:
         deals = get_all_deals()
@@ -700,18 +488,22 @@ elif menu == "إدارة الصفقات":
             total_comm_val = sum(d['commission_amount'] for d in deals)
             
             m1, m2, m3 = st.columns(3)
-            m1.metric("إجمالي الصفقات", f"{len(deals)}")
+            m1.metric("عدد الصفقات المسجلة", f"{len(deals)} صفقات")
             m2.metric("إجمالي قيمة الصفقات", f"${total_deals_val:,.2f}")
-            m3.metric("إجمالي العمولات", f"${total_comm_val:,.2f}")
+            m3.metric("إجمالي أرباح العمولات", f"${total_comm_val:,.2f}")
             
             st.divider()
-            st.dataframe(pd.DataFrame(deals), use_container_width=True)
+            st.subheader("📊 جدول الصفقات المكتملة والقائمة")
+            df_deals = pd.DataFrame(deals)
+            st.dataframe(df_deals, use_container_width=True)
             
             col_exp1, col_exp2 = st.columns(2)
+            
             with col_exp1:
+                st.subheader("📥 تصدير السجل (Excel)")
                 excel_file = export_to_excel(deals, sheet_name="Deals_Summary")
                 st.download_button(
-                    label="📥 تنزيل كافة الصفقات (Excel)",
+                    label="تنزيل كافة الصفقات (Excel)",
                     data=excel_file,
                     file_name="GTI_Deals_Summary.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -719,22 +511,24 @@ elif menu == "إدارة الصفقات":
                 )
                 
             with col_exp2:
+                st.subheader("📄 تصدير وإرسال تقرير صفقة (PDF)")
                 deal_ids = [d['id'] for d in deals]
-                selected_deal_id = st.selectbox("اختر رقم الصفقة لتصدير PDF/البريد:", deal_ids)
+                selected_deal_id = st.selectbox("اختر رقم الصفقة:", deal_ids)
                 selected_deal_data = next((d for d in deals if d['id'] == selected_deal_id), None)
                 
                 if selected_deal_data:
                     pdf_file = generate_deal_pdf(selected_deal_data)
                     st.download_button(
-                        label=f"📄 تنزيل تقرير الصفقة #{selected_deal_id} (PDF)",
+                        label=f"تنزيل تقرير الصفقة #{selected_deal_id} (PDF)",
                         data=pdf_file,
                         file_name=f"GTI_Deal_Report_{selected_deal_id}.pdf",
                         mime="application/pdf",
                         use_container_width=True
                     )
                     
-                    target_email = st.text_input("البريد الإلكتروني للمستلم:", value="client@example.com")
-                    if st.button("📧 إرسال تقرير الصفقة إلكترونياً", use_container_width=True):
+                    st.markdown("---")
+                    target_email = st.text_input("أدخل البريد الإلكتروني للمستلم:", value="client@example.com")
+                    if st.button("📧 إرسال تقرير الصفقة إلكترونياً تلقائياً", use_container_width=True):
                         email_body = f"<h3>مرفق لكم تقرير ملخص الصفقة الرسمية #{selected_deal_id}</h3><p>شكراً لتعاملكم مع GTI.</p>"
                         success, msg = send_email(
                             to_email=target_email,
@@ -744,46 +538,48 @@ elif menu == "إدارة الصفقات":
                             attachment_filename=f"GTI_Deal_Report_{selected_deal_id}.pdf"
                         )
                         if success:
-                            st.success(msg)
+                            st.success(f"✅ {msg}")
                         else:
-                            st.error(msg)
+                            st.error(f"❌ {msg}")
         else:
             st.info("لا توجد صفقات مسجلة حالياً.")
 
 
-elif menu == "متابعة الشحنات":
-    st.markdown("<div class='gti-page-title'>متابعة الشحنات والعمليات اللوجستية (Shipment Control Center)</div>", unsafe_allow_html=True)
+# --- 8. متابعة الشحنات ---
+elif menu == "🚢 متابعة الشحنات":
+    st.markdown("<div class='main-header'>🚢 متابعة الشحنات والعمليات اللوجستية (Shipment Tracking)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ تسجيل شحنة جديدة", "📋 تتبع الشحنات القائمة"])
+    tab1, tab2 = st.tabs(["➕ تسجيل شحنة جديدة", "📋 جدول تتبع الشحنات القائمة"])
     
     deals_list = get_all_deals()
     
     with tab1:
         if not deals_list:
-            st.warning("يجب إنشاء صفقة واحدة على الأقل قبل تسجيل شحنة جديدة.")
+            st.warning("⚠️ يجب إنشاء صفقة واحدة على الأقل قبل تسجيل شحنة جديدة.")
         else:
-            deal_dict = {f"صفقة #{d['id']} - القيمة: ${d['deal_value']:,.2f}": d['id'] for d in deals_list}
+            deal_dict = {f"صفقة #{d['id']} - قيمة: ${d['deal_value']:,.2f}": d['id'] for d in deals_list}
             
             with st.form("add_shipment_form", clear_on_submit=True):
-                selected_deal = st.selectbox("الصفقة المرتبطة *", list(deal_dict.keys()))
+                selected_deal = st.selectbox("اختر الصفقة المرتبطة بالطلب *", list(deal_dict.keys()))
                 
                 col_a, col_b = st.columns(2)
-                shipping_company = col_a.text_input("شركة الشحن")
+                shipping_company = col_a.text_input("شركة الشحن (مثال: Maersk, MSC, COSCO)")
                 container_number = col_b.text_input("رقم الحاوية (Container No.)")
                 
                 col_c, col_d = st.columns(2)
-                bill_of_lading = col_c.text_input("رقم بوليصة الشحن (B/L)")
-                status = col_d.selectbox("الحالة الحالية", ["Preparing", "On Board", "Arrived", "Cleared"])
+                bill_of_lading = col_c.text_input("رقم بوليصة الشحن (B/L Number)")
+                status = col_d.selectbox("حالة الشحنة الحالية", ["Preparing", "On Board", "Arrived", "Cleared"])
                 
                 col_e, col_f = st.columns(2)
-                loading_port = col_e.text_input("ميناء التحميل")
-                discharge_port = col_f.text_input("ميناء التفريغ")
+                loading_port = col_e.text_input("ميناء التحميل (Loading Port)")
+                discharge_port = col_f.text_input("ميناء التفريغ (Discharge Port)")
                 
                 col_g, col_h = st.columns(2)
-                etd = col_g.date_input("تاريخ المغادرة (ETD)")
-                eta = col_h.date_input("تاريخ الوصول (ETA)")
+                etd = col_g.date_input("تاريخ المغادرة المتوقع (ETD)")
+                eta = col_h.date_input("تاريخ الوصول المتوقع (ETA)")
                 
-                if st.form_submit_button("تسجيل الشحنة اللوجستية"):
+                submitted = st.form_submit_button("تسجيل الشحنة")
+                if submitted:
                     shipment_id = add_shipment(
                         deal_id=deal_dict[selected_deal],
                         shipping_company=shipping_company,
@@ -795,7 +591,7 @@ elif menu == "متابعة الشحنات":
                         discharge_port=discharge_port,
                         status=status
                     )
-                    st.success(f"تم تسجيل الشحنة بنجاح! رقم المتابعة: #{shipment_id}")
+                    st.success(f"✅ تم تسجيل الشحنة بنجاح! رقم المتابعة اللوجستي: #{shipment_id}")
 
     with tab2:
         shipments = get_all_shipments()
@@ -803,128 +599,112 @@ elif menu == "متابعة الشحنات":
             st.dataframe(pd.DataFrame(shipments), use_container_width=True)
             
             st.divider()
+            st.subheader("🔄 تحديث حالة شحنة قائمة")
             col_sel, col_stat = st.columns(2)
             s_ids = [s['id'] for s in shipments]
             selected_s_id = col_sel.selectbox("اختر رقم الشحنة لتحديث حالتها:", s_ids)
             new_s_status = col_stat.selectbox("الحالة الجديدة:", ["Preparing", "On Board", "Arrived", "Cleared"])
             
-            if st.button("تحديث حالة الشحنة"):
+            if st.button("تحديث الحالة الآن"):
                 update_shipment_status(selected_s_id, new_s_status)
-                st.success(f"تم تحديث حالة الشحنة #{selected_s_id} إلى ({new_s_status}) بنجاح!")
+                st.success(f"✅ تم تحديث حالة الشحنة #{selected_s_id} إلى ({new_s_status}) بنجاح!")
                 st.rerun()
         else:
             st.info("لا توجد شحنات مسجلة حالياً.")
 
 
-elif menu == "حاسبة التكلفة الواصلة":
-    st.markdown("<div class='gti-page-title'>حاسبة التكلفة الواصلة (Landed Cost & Profitability)</div>", unsafe_allow_html=True)
-    st.markdown("<div class='gti-page-subtitle'>نمذجة مالية حية لتكاليف الاستيراد وتسعير المبيعات</div>", unsafe_allow_html=True)
+# --- 9. حاسبة التكلفة ---
+elif menu == "🧮 حاسبة التكلفة":
+    st.markdown("<div class='main-header'>🧮 حاسبة تكلفة الاستيراد وتحديد سعر البيع (Landed Cost Calculator)</div>", unsafe_allow_html=True)
     
-    col_input, col_results = st.columns([1.2, 1])
+    st.info("💡 أدخل عناصر التكلفة المختلفة للحصول على التكلفة النهائية للطن وسعر البيع المقترح وهامش الربح المتوقع.")
     
-    with col_input:
-        st.markdown("<div class='kpi-card' style='padding: 24px;'>", unsafe_allow_html=True)
-        st.markdown("<div class='gti-section-title' style='margin-top:0;'>الافتراضات التجارية وسعر المصنع</div>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        quantity = c1.number_input("الكمية (طن MT)", value=100.0, step=10.0)
-        exw_price = c2.number_input("سعر المصنع ($ EXW/FOB)", value=850.0, step=10.0)
+    col_input1, col_input2 = st.columns(2)
+    
+    with col_input1:
+        st.subheader("📦 البيانات الأساسية وسعر المصنع")
+        quantity = st.number_input("الكمية المطلوبة (بالأطنان)", min_value=1.0, value=20.0, step=1.0)
+        exw_fob_unit_price = st.number_input("سعر الطن من المصنع ($ EXW / FOB)", min_value=0.0, value=850.0, step=10.0)
         
-        st.markdown("<div class='gti-section-title'>اللوجستيات والشحن البحري</div>", unsafe_allow_html=True)
-        c3, c4 = st.columns(2)
-        freight = c3.number_input("إجمالي الشحن البحري ($)", value=1800.0, step=100.0)
-        insurance = c4.number_input("التأمين ($)", value=150.0)
+        st.subheader("🚢 اللوجستيات والشحن")
+        sea_freight = st.number_input("إجمالي الشحن البحري ($)", min_value=0.0, value=1800.0, step=50.0)
+        insurance = st.number_input("تكلفة التأمين البحري ($)", min_value=0.0, value=150.0, step=10.0)
         
-        st.markdown("<div class='gti-section-title'>الرسوم المحلية والجمارك</div>", unsafe_allow_html=True)
-        c5, c6 = st.columns(2)
-        duty = c5.number_input("نسبة الجمارك (%)", value=5.0, step=0.5)
-        transport = c6.number_input("النقل الداخلي ($)", value=400.0)
-        c7, c8 = st.columns(2)
-        port_fees = c7.number_input("رسوم الميناء ($)", value=300.0)
-        admin = c8.number_input("مصاريف إدارية ($)", value=200.0)
+    with col_input2:
+        st.subheader("🏛️ الجمارك والمصاريف المحلية")
+        customs_duty_percent = st.number_input("نسبة الجمرك (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.5)
+        inland_transport = st.number_input("النقل الداخلي ($)", min_value=0.0, value=400.0, step=20.0)
+        storage_port_fees = st.number_input("مصاريف الميناء والتخزين ($)", min_value=0.0, value=300.0, step=20.0)
+        admin_expenses = st.number_input("المصروفات الإدارية والخدمية ($)", min_value=0.0, value=200.0, step=20.0)
         
-        st.markdown("<div class='gti-section-title'>المستهدف التجاري</div>", unsafe_allow_html=True)
-        margin = st.slider("هامش الربح المستهدف (%)", 1.0, 40.0, 15.0)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.subheader("🎯 هامش الربح المستهدف")
+        desired_margin_percent = st.slider("نسبة هامش الربح المطلوبة (%)", min_value=1.0, max_value=50.0, value=15.0, step=0.5)
         
+    st.divider()
+    
     res = calculate_landed_cost(
-        exw_fob_unit_price=exw_price, quantity=quantity, sea_freight=freight,
-        insurance=insurance, customs_duty_percent=duty, inland_transport=transport,
-        storage_port_fees=port_fees, admin_expenses=admin, desired_margin_percent=margin
+        exw_fob_unit_price=exw_fob_unit_price,
+        quantity=quantity,
+        sea_freight=sea_freight,
+        insurance=insurance,
+        customs_duty_percent=customs_duty_percent,
+        inland_transport=inland_transport,
+        storage_port_fees=storage_port_fees,
+        admin_expenses=admin_expenses,
+        desired_margin_percent=desired_margin_percent
     )
     
-    with col_results:
-        st.markdown(f"""
-        <div class="financial-panel">
-            <h3 style="color: #F1F4F7; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 32px;">الملخص المالي النهائي</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <div>
-                    <div class="fin-label">إجمالي التكلفة الواصلة</div>
-                    <div class="fin-value">${res['total_landed_cost']:,.2f}</div>
-                </div>
-                <div>
-                    <div class="fin-label">التكلفة الواصلة / طن</div>
-                    <div class="fin-value fin-value-accent">${res['cost_per_ton']:,.2f}</div>
-                </div>
-            </div>
-            
-            <div class="fin-divider"></div>
-            
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="color: #94A3B8; font-size: 14px;">قيمة الجمارك المقدرة</span>
-                    <span style="color: #FFFFFF; font-weight: 600;">${res['customs_amount']:,.2f}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94A3B8; font-size: 14px;">الهامش المستهدف</span>
-                    <span style="color: #FFFFFF; font-weight: 600;">{margin}%</span>
-                </div>
-            </div>
-            
-            <div style="background: #15803D; border-radius: 8px; padding: 20px;">
-                <div class="fin-label" style="color: #BBF7D0;">سعر البيع المقترح / طن</div>
-                <div class="fin-value" style="margin-bottom: 16px;">${res['suggested_price_per_ton']:,.2f}</div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 16px;">
-                    <span style="color: #BBF7D0; font-size: 14px; font-weight: 600;">صافي الربح المتوقع</span>
-                    <span style="background: white; color: #15803D; padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 16px;">${res['expected_profit']:,.2f}</span>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-elif menu == "مساعد GTI الاستراتيجي":
-    st.markdown("<div class='gti-page-title'>مساعد GTI للاستخبارات والقرار الذكي</div>", unsafe_allow_html=True)
-    st.markdown("<div class='gti-page-subtitle'>محرك تحليلي متقدم لتقييم الموردين، الهوامش، والمحاكاة اللوجستية</div>", unsafe_allow_html=True)
+    st.subheader("📊 نتائج تحليل التكلفة والربحية")
     
-    tab1, tab2 = st.tabs(["🎯 استخبارات الموردين والمنتجات", "📉 محاكاة حساسية الشحن البحري"])
+    res_col1, res_col2, res_col3, res_col4 = st.columns(4)
+    res_col1.metric("التكلفة الإجمالية الواصلة", f"${res['total_landed_cost']:,.2f}")
+    res_col2.metric("تكلفة الطن الواصل", f"${res['cost_per_ton']:,.2f} / طن")
+    res_col3.metric("تكلفة الكيلوجرام الواصل", f"${res['cost_per_kg']:,.3f} / كجم")
+    res_col4.metric("قيمة الجمارك المقدرة", f"${res['customs_amount']:,.2f}")
+    
+    st.divider()
+    
+    profit_col1, profit_col2, profit_col3 = st.columns(3)
+    profit_col1.metric("سعر البيع الإجمالي المقترح", f"${res['suggested_selling_price_total']:,.2f}")
+    profit_col2.metric("سعر بيع الطن المقترح للعميل", f"${res['suggested_price_per_ton']:,.2f} / طن")
+    profit_col3.metric("صافي الربح المتوقع", f"${res['expected_profit']:,.2f}", f"هامش {res['desired_margin_percent']}%")
+
+
+# --- 10. مساعد الذكاء الاصطناعي ---
+elif menu == "🤖 مساعد الذكاء الاصطناعي":
+    st.markdown("<div class='main-header'>🤖 مساعد GTI للذكاء التجاري والاستعلامات الذكية</div>", unsafe_allow_html=True)
+    
+    st.info("💡 يمكنك طرح أسئلة استراتيجية على النظام لتحليل بيانات الموردين، تقييم هَامش الربح، ومحاكاة مخاطر السوق.")
+    
+    tab1, tab2 = st.tabs(["🎯 استفسارات الموردين والمنتجات", "📉 محاكاة أثر ارتفاع أسعار الشحن"])
     
     products_list = get_all_products()
     deals_list = get_all_deals()
     
     with tab1:
+        st.subheader("🔍 استعلام المورد الأفضل")
         if not products_list:
-            st.warning("يرجى إضافة منتجات وعروض أسعار أولاً لتشغيل التحليل الاستراتيجي.")
+            st.warning("⚠️ يرجى إضافة منتجات وعروض أسعار أولاً لتشغيل التحليل.")
         else:
             p_dict = {p['trade_name']: p['id'] for p in products_list}
-            selected_prod_name = st.selectbox("اختر المنتج الكيميائي للتحليل:", list(p_dict.keys()))
+            selected_prod_name = st.selectbox("اختر المنتج الكيميائي المطلوب تحليله:", list(p_dict.keys()))
             
-            if st.button("تشغيل تحليل المورد الأفضل"):
+            if st.button("تحليل واقتراح أفضل مورد"):
                 answer = ask_gti_ai("best_supplier", {"product_id": p_dict[selected_prod_name]})
                 st.markdown(answer)
                 
     with tab2:
+        st.subheader("🚢 محاكاة حساسية أسعار الشحن البحري")
         if not deals_list:
-            st.warning("لا توجد صفقات حالية للمحاكاة.")
+            st.warning("⚠️ لا توجد صفقات حالية للمحاكاة.")
         else:
-            deal_options = {f"صفقة #{d['id']} - القيمة: ${d['deal_value']:,.2f}": d for d in deals_list}
-            selected_d_label = st.selectbox("اختر الصفقة المستهدفة:", list(deal_options.keys()))
+            deal_options = {f"صفقة #{d['id']} - قيمة ${d['deal_value']:,.2f}": d for d in deals_list}
+            selected_d_label = st.selectbox("اختر الصفقة:", list(deal_options.keys()))
             selected_d = deal_options[selected_d_label]
             
             shipping_inc = st.slider("نسبة الزيادة المتوقعة في أسعار الشحن (%)", 1.0, 50.0, 15.0, 1.0)
             
-            if st.button("تشغيل سيناريو محاكاة المخاطر"):
+            if st.button("تشغيل سناريو المحاكاة"):
                 answer = ask_gti_ai("shipping_sensitivity", {
                     "deal_value": selected_d['deal_value'],
                     "current_profit": selected_d['net_profit'],
@@ -933,8 +713,9 @@ elif menu == "مساعد GTI الاستراتيجي":
                 st.markdown(answer)
 
 
-elif menu == "التحليلات والتقارير":
-    st.markdown("<div class='gti-page-title'>التحليلات الإحصائية وتقارير الذكاء التجاري</div>", unsafe_allow_html=True)
+# --- 11. التحليلات والتقارير ---
+elif menu == "📈 التحليلات والتقارير":
+    st.markdown("<div class='main-header'>📈 التحليلات الإحصائية وتقرير الذكاء التجاري</div>", unsafe_allow_html=True)
     
     summary = get_analytics_summary()
     
@@ -945,15 +726,16 @@ elif menu == "التحليلات والتقارير":
     st.divider()
     
     col_a, col_b = st.columns(2)
+    
     with col_a:
-        st.markdown("<div class='gti-section-title'>المنتجات الأكثر طلباً</div>", unsafe_allow_html=True)
+        st.subheader("🔥 المنتجات الأكثر طلباً")
         if summary['top_products']:
             st.dataframe(pd.DataFrame(summary['top_products']), use_container_width=True)
         else:
             st.info("لا توجد بيانات كافية حول طلبات المنتجات.")
             
     with col_b:
-        st.markdown("<div class='gti-section-title'>الموردون الأبرز تقييماً</div>", unsafe_allow_html=True)
+        st.subheader("⭐ الموردون الأبرز تقييماً")
         if summary['top_suppliers']:
             st.dataframe(pd.DataFrame(summary['top_suppliers']), use_container_width=True)
         else:
