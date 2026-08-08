@@ -178,7 +178,7 @@ if menu == "📊 لوحة التحكم":
 elif menu == "👥 إدارة العملاء":
     st.markdown("<div class='main-header'>👥 إدارة العملاء (Customers)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إضافة عميل جديد", "📋 قائمة العملاء المسجلين"])
+    tab1, tab2, tab3 = st.tabs(["➕ إضافة عميل جديد", "📋 قائمة العملاء المسجلين", "🗑️ حذف عميل"])
     
     with tab1:
         with st.form("add_customer_form", clear_on_submit=True):
@@ -213,12 +213,25 @@ elif menu == "👥 إدارة العملاء":
         else:
             st.info("لا يوجد عملاء مسجلون حالياً.")
 
+    with tab3:
+        st.subheader("🗑️ حذف عميل من النظام")
+        customers = get_all_customers()
+        if customers:
+            cust_dict = {f"{c['company_name']} (ID: {c['id']})": c['id'] for c in customers}
+            selected_to_delete = st.selectbox("اختر العميل المراد حذفه:", list(cust_dict.keys()))
+            
+            if st.button("⚠️ تأكيد حذف هذا العميل نهائياً"):
+                delete_customer(cust_dict[selected_to_delete])
+                st.success("✅ تم حذف العميل بنجاح!")
+                st.rerun()
+        else:
+            st.info("لا يوجد عملاء للحذف.")
 
 # --- 3. إدارة الموردين ---
 elif menu == "🏭 إدارة الموردين":
     st.markdown("<div class='main-header'>🏭 إدارة الموردين (Suppliers)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إضافة مورد جديد", "📋 قائمة الموردين المسجلين"])
+    tab1, tab2, tab3 = st.tabs(["➕ إضافة مورد جديد", "📋 قائمة الموردين المسجلين", "🗑️ حذف مورد"])
     
     with tab1:
         with st.form("add_supplier_form", clear_on_submit=True):
@@ -248,12 +261,25 @@ elif menu == "🏭 إدارة الموردين":
         else:
             st.info("لا يوجد موردون مسجلون حالياً.")
 
+    with tab3:
+        st.subheader("🗑️ حذف مورد من النظام")
+        suppliers = get_all_suppliers()
+        if suppliers:
+            supp_dict = {f"{s['company_name']} (ID: {s['id']})": s['id'] for s in suppliers}
+            selected_to_delete = st.selectbox("اختر المورد المراد حذفه:", list(supp_dict.keys()))
+            
+            if st.button("⚠️ تأكيد حذف هذا المورد نهائياً"):
+                delete_supplier(supp_dict[selected_to_delete])
+                st.success("✅ تم حذف المورد بنجاح!")
+                st.rerun()
+        else:
+            st.info("لا يوجد موردون للحذف.")
 
 # --- 4. إدارة المنتجات ---
 elif menu == "🧪 المنتجات الكيميائية":
     st.markdown("<div class='main-header'>🧪 المنتجات الكيميائية (Products)</div>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["➕ إضافة منتج جديد", "📋 قائمة المنتجات المسجلة"])
+    tab1, tab2, tab3 = st.tabs(["➕ إضافة منتج جديد", "📋 قائمة المنتجات المسجلة", "🗑️ حذف منتج"])
     
     with tab1:
         with st.form("add_product_form", clear_on_submit=True):
@@ -282,6 +308,19 @@ elif menu == "🧪 المنتجات الكيميائية":
         else:
             st.info("لا توجد منتجات مسجلة حالياً.")
 
+    with tab3:
+        st.subheader("🗑️ حذف منتج من النظام")
+        products = get_all_products()
+        if products:
+            prod_dict = {f"{p['trade_name']} (ID: {p['id']})": p['id'] for p in products}
+            selected_to_delete = st.selectbox("اختر المنتج المراد حذفه:", list(prod_dict.keys()))
+            
+            if st.button("⚠️ تأكيد حذف هذا المنتج نهائياً"):
+                delete_product(prod_dict[selected_to_delete])
+                st.success("✅ تم حذف المنتج بنجاح!")
+                st.rerun()
+        else:
+            st.info("لا توجد منتجات للحذف.")
 
 # --- 5. طلبات الشراء ---
 elif menu == "📑 طلبات الشراء":

@@ -28,3 +28,11 @@ def get_product_by_id(product_id):
         cursor.execute(query, (product_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
+def delete_supplier(supplier_id):
+    """حذف مورد من قاعدة البيانات"""
+    query = "DELETE FROM suppliers WHERE id = ?"
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, (supplier_id,))
+        conn.commit()
+        return cursor.rowcount > 0
